@@ -1,49 +1,11 @@
-<script type="text/javascript">
-        var gk_isXlsx = false;
-        var gk_xlsxFileLookup = {};
-        var gk_fileData = {};
-        function filledCell(cell) {
-          return cell !== '' && cell != null;
-        }
-        function loadFileData(filename) {
-        if (gk_isXlsx && gk_xlsxFileLookup[filename]) {
-            try {
-                var workbook = XLSX.read(gk_fileData[filename], { type: 'base64' });
-                var firstSheetName = workbook.SheetNames[0];
-                var worksheet = workbook.Sheets[firstSheetName];
-
-                // Convert sheet to JSON to filter blank rows
-                var jsonData = XLSX.utils.sheet_to_json(worksheet, { header: 1, blankrows: false, defval: '' });
-                // Filter out blank rows (rows where all cells are empty, null, or undefined)
-                var filteredData = jsonData.filter(row => row.some(filledCell));
-
-                // Heuristic to find the header row by ignoring rows with fewer filled cells than the next row
-                var headerRowIndex = filteredData.findIndex((row, index) =>
-                  row.filter(filledCell).length >= filteredData[index + 1]?.filter(filledCell).length
-                );
-                // Fallback
-                if (headerRowIndex === -1 || headerRowIndex > 25) {
-                  headerRowIndex = 0;
-                }
-
-                // Convert filtered JSON back to CSV
-                var csv = XLSX.utils.aoa_to_sheet(filteredData.slice(headerRowIndex)); // Create a new sheet from filtered array of arrays
-                csv = XLSX.utils.sheet_to_csv(csv, { header: 1 });
-                return csv;
-            } catch (e) {
-                console.error(e);
-                return "";
-            }
-        }
-        return gk_fileData[filename] || "";
-        }
-        </script><!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Introduction to LLMs and Neural Networks</title>
     <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
     <style>
         body {
             font-family: 'Inter', sans-serif;
@@ -156,6 +118,9 @@
             margin-top: 1rem;
             display: inline-block;
             transition: transform 0.3s ease;
+            color: #ffffff;
+            border: none;
+            cursor: pointer;
         }
         .learn-more-btn:hover, .submit-btn:hover {
             transform: scale(1.05);
@@ -182,8 +147,9 @@
             max-height: 80vh;
             overflow-y: auto;
             position: relative;
+            color: #ffffff;
         }
-        .close-btn {
+        .closeBTN {
             position: absolute;
             top: 1rem;
             right: 1rem;
@@ -193,6 +159,7 @@
             cursor: pointer;
             color: #ffffff;
             font-size: 1rem;
+            border: none;
         }
         .assessment-container {
             max-height: 80vh;
@@ -234,74 +201,31 @@
             -webkit-background-clip: text;
             -webkit-text-fill-color: transparent;
         }
-        /* Modal Styles */
-.modal {
-    display: none;
-    position: fixed;
-    top: 0;
-    left: 0;
-    width: 100%;
-    height: 100%;
-    background-color: rgba(0, 0, 0, 0.5);
-    z-index: 1000;
-    justify-content: center;
-    align-items: center;
-}
-
-.modal-content {
-    background-color: #fff;
-    padding: 20px;
-    border-radius: 5px;
-    text-align: center;
-    max-width: 400px;
-    width: 80%;
-    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
-    font-family: Arial, sans-serif;
-}
-
-.modal-content h2 {
-    color: #333;
-    margin-bottom: 10px;
-}
-
-.modal-content p {
-    color: #666;
-    margin-bottom: 20px;
-}
-
-.close-button {
-    position: absolute;
-    top: 10px;
-    right: 15px;
-    font-size: 20px;
-    cursor: pointer;
-    color: #333;
-}
     </style>
 </head>
 <body>
     <!-- Sidebar Menu -->
-    <div class="sidebar">
+    <div class="sidebar" role="navigation" aria-label="Slide navigation">
         <h3>Slide Menu</h3>
         <ul>
-            <li><a href="#" class="menu-item active" data-slide="0">What Are Large Language Models?</a></li>
-            <li><a href="#" class="menu-item" data-slide="1">Evolution of LLMs</a></li>
-            <li><a href="#" class="menu-item" data-slide="2">Neural Networks 101</a></li>
-            <li><a href="#" class="menu-item" data-slide="3">Deep Learning and LLMs</a></li>
-            <li><a href="#" class="menu-item" data-slide="4">The Transformer Revolution</a></li>
-            <li><a href="#" class="menu-item" data-slide="5">Self-Attention Explained</a></li>
-            <li><a href="#" class="menu-item" data-slide="6">Training Large Language Models</a></li>
-            <li><a href="#" class="menu-item" data-slide="7">Fine-Tuning and Transfer Learning</a></li>
-            <li><a href="#" class="menu-item" data-slide="8">Applications of LLMs</a></li>
-            <li><a href="#" class="menu-item" data-slide="9">Challenges and Limitations</a></li>
-            <li><a href="#" class="menu-item" data-slide="10">The Future of LLMs</a></li>
-            <li><a href="#" class="menu-item" data-slide="11">Conclusion</a></li>
-            <li><a href="#" class="menu-item" data-slide="12">Assessment</a></li>
+            <li><a href="#" class="menu-item active" data-slide="0" aria-label="Slide 1: What Are Large Language Models?">What Are Large Language Models?</a></li>
+            <li><a href="#" class="menu-item" data-slide="1" aria-label="Slide 2: Evolution of LLMs">Evolution of LLMs</a></li>
+            <li><a href="#" class="menu-item" data-slide="2" aria-label="Slide 3: Neural Networks 101">Neural Networks 101</a></li>
+            <li><a href="#" class="menu-item" data-slide="3" aria-label="Slide 4: Deep Learning and LLMs">Deep Learning and LLMs</a></li>
+            <li><a href="#" class="menu-item" data-slide="4" aria-label="Slide 5: The Transformer Revolution">The Transformer Revolution</a></li>
+            <li><a href="#" class="menu-item" data-slide="5" aria-label="Slide 6: Self-Attention Explained">Self-Attention Explained</a></li>
+            <li><a href="#" class="menu-item" data-slide="6" aria-label="Slide 7: Training Large Language Models">Training Large Language Models</a></li>
+            <li><a href="#" class="menu-item" data-slide="7" aria-label="Slide 8: Fine-Tuning and Transfer Learning">Fine-Tuning and Transfer Learning</a></li>
+            <li><a href="#" class="menu-item" data-slide="8" aria-label="Slide 9: Applications of LLMs">Applications of LLMs</a></li>
+            <li><a href="#" class="menu-item" data-slide="9" aria-label="Slide 10: Challenges and Limitations">Challenges and Limitations</a></li>
+            <li><a href="#" class="menu-item" data-slide="10" aria-label="Slide 11: The Future of LLMs">The Future of LLMs</a></li>
+            <li><a href="#" class="menu-item" data-slide="11" aria-label="Slide 12: Conclusion">Conclusion</a></li>
+            <li><a href="#" class="menu-item" data-slide="12" aria-label="Slide 13: Assessment">Assessment</a></li>
         </ul>
     </div>
 
     <!-- Slide Container -->
-    <div class="slide-container">
+    <div class="slide-container" role="main" aria-label="Slide content">
         <!-- Slide 1: Introduction to LLMs -->
         <div class="slide active">
             <div class="content-box">
@@ -309,12 +233,12 @@
                 <p class="text-lg mb-2"><strong>Context:</strong> Large Language Models (LLMs) are transforming how we interact with technology, from chatbots to content generation.</p>
                 <p class="text-lg mb-2"><strong>Description:</strong> LLMs are AI systems trained on vast text datasets to understand and generate human-like text. They leverage advanced neural networks to process language, enabling tasks like translation, summarization, and question-answering. Examples include GPT-4 and LLaMA.</p>
                 <p class="text-lg mb-2"><strong>Key Learning Outcome:</strong> Understand the role of LLMs in modern AI and their ability to mimic human language.</p>
-                <button class="learn-more-btn" data-modal="modal-0">Learn More</button>
+                <button class="learn-more-btn" data-modal="modal-0" aria-label="Learn more about Large Language Models">Learn More</button>
             </div>
-            <div id="modal-0" class="modal">
+            <div id="modal-0" class="modal" role="dialog" aria-labelledby="modal-0-title">
                 <div class="modal-content">
-                    <span class="close-btn">×</span>
-                    <h3 class="text-2xl font-bold mb-4">Extended Reading: Large Language Models</h3>
+                    <button class="closeBTN" aria-label="Close modal">×</button>
+                    <h3 id="modal-0-title" class="text-2xl font-bold mb-4">Extended Reading: Large Language Models</h3>
                     <p class="text-lg mb-2">Large Language Models (LLMs) represent a significant leap in natural language processing, driven by advancements in neural network architectures and computational power. These models are typically based on the transformer architecture, which allows them to capture complex linguistic patterns and contextual relationships in text. LLMs are pre-trained on diverse corpora, such as books, articles, and web pages, using self-supervised learning techniques like masked language modeling or next-token prediction.</p>
                     <p class="text-lg mb-2">The scale of LLMs is staggering, with models like GPT-4 boasting hundreds of billions of parameters. This scale enables them to perform a wide range of tasks without task-specific training, a capability known as zero-shot or few-shot learning. For instance, an LLM can generate coherent essays, answer complex questions, or even engage in creative writing by leveraging patterns learned during training.</p>
                     <p class="text-lg mb-2">However, the power of LLMs comes with trade-offs. Their training requires immense computational resources, often involving thousands of GPUs running for weeks or months. This raises concerns about energy consumption and accessibility, as only well-funded organizations can afford to develop such models. Additionally, LLMs can inherit biases present in their training data, leading to outputs that may reinforce stereotypes or misinformation.</p>
@@ -331,12 +255,12 @@
                 <p class="text-lg mb-2"><strong>Context:</strong> The development of LLMs has been marked by rapid advancements in scale and capability.</p>
                 <p class="text-lg mb-2"><strong>Description:</strong> From early models like ELIZA to modern giants like GPT-3, LLMs have grown in size (billions of parameters) and complexity. Key milestones include the introduction of transformers in 2017, which revolutionized natural language processing.</p>
                 <p class="text-lg mb-2"><strong>Key Learning Outcome:</strong> Recognize the historical progression of LLMs and the impact of transformers.</p>
-                <button class="learn-more-btn" data-modal="modal-1">Learn More</button>
+                <button class="learn-more-btn" data-modal="modal-1" aria-label="Learn more about Evolution of LLMs">Learn More</button>
             </div>
-            <div id="modal-1" class="modal">
+            <div id="modal-1" class="modal" role="dialog" aria-labelledby="modal-1-title">
                 <div class="modal-content">
-                    <span class="close-btn">×</span>
-                    <h3 class="text-2xl font-bold mb-4">Extended Reading: Evolution of LLMs</h3>
+                    <button class="closeBTN" aria-label="Close modal">×</button>
+                    <h3 id="modal-1-title" class="text-2xl font-bold mb-4">Extended Reading: Evolution of LLMs</h3>
                     <p class="text-lg mb-2">The journey of LLMs began with rudimentary systems like ELIZA in the 1960s, which used pattern matching to simulate conversation. These early models were limited to specific domains and lacked true understanding. The 1980s and 1990s saw rule-based and statistical models, such as n-gram models, which predicted word sequences based on probabilities but struggled with long-range dependencies.</p>
                     <p class="text-lg mb-2">The advent of neural networks in the 2000s marked a turning point. Recurrent Neural Networks (RNNs) and Long Short-Term Memory (LSTM) networks improved the handling of sequential data, enabling better language modeling. However, these architectures were computationally intensive and struggled with parallelization.</p>
                     <p class="text-lg mb-2">The transformative moment came in 2017 with the introduction of the transformer architecture in the paper "Attention is All You Need" by Vaswani et al. Transformers replaced sequential processing with self-attention mechanisms, allowing models to weigh the importance of words regardless of their position in a sequence. This enabled parallel training, significantly reducing computation time and enabling the scaling of models like BERT, GPT-2, and T5.</p>
@@ -353,12 +277,12 @@
                 <p class="text-lg mb-2"><strong>Context:</strong> Neural networks are the backbone of LLMs, mimicking human brain processes.</p>
                 <p class="text-lg mb-2"><strong>Description:</strong> Neural networks consist of layers of interconnected nodes (neurons) that process input data. Each neuron applies a weighted transformation, passing outputs to the next layer. Key components include input layers, hidden layers, and output layers.</p>
                 <p class="text-lg mb-2"><strong>Key Learning Outcome:</strong> Grasp the fundamental structure and function of neural networks.</p>
-                <button class="learn-more-btn" data-modal="modal-2">Learn More</button>
+                <button class="learn-more-btn" data-modal="modal-2" aria-label="Learn more about Neural Networks">Learn More</button>
             </div>
-            <div id="modal-2" class="modal">
+            <div id="modal-2" class="modal" role="dialog" aria-labelledby="modal-2-title">
                 <div class="modal-content">
-                    <span class="close-btn">×</span>
-                    <h3 class="text-2xl font-bold mb-4">Extended Reading: Neural Networks Basics</h3>
+                    <button class="closeBTN" aria-label="Close modal">×</button>
+                    <h3 id="modal-2-title" class="text-2xl font-bold mb-4">Extended Reading: Neural Networks Basics</h3>
                     <p class="text-lg mb-2">Neural networks are computational models inspired by the human brain's structure, designed to learn patterns from data. A neural network comprises layers: an input layer that receives data, hidden layers that process it, and an output layer that produces results. Each layer contains nodes (neurons) connected by edges with associated weights.</p>
                     <p class="text-lg mb-2">During processing, a neuron computes a weighted sum of its inputs, applies an activation function (e.g., ReLU, sigmoid), and passes the result forward. Activation functions introduce non-linearity, enabling the network to model complex relationships. Training involves adjusting weights to minimize a loss function, typically using backpropagation and gradient descent.</p>
                     <p class="text-lg mb-2">In LLMs, neural networks are deep, with many hidden layers, allowing them to learn hierarchical features. For example, early layers might detect word boundaries, while deeper layers capture syntactic or semantic patterns. The complexity of these networks requires significant computational resources, often leveraging GPUs for parallel processing.</p>
@@ -375,12 +299,12 @@
                 <p class="text-lg mb-2"><strong>Context:</strong> Deep learning enables LLMs to handle complex language tasks.</p>
                 <p class="text-lg mb-2"><strong>Description:</strong> Deep learning involves neural networks with many layers (deep architectures). In LLMs, these layers learn hierarchical features, from basic grammar to contextual meaning. Training involves optimizing weights using backpropagation and gradient descent.</p>
                 <p class="text-lg mb-2"><strong>Key Learning Outcome:</strong> Understand how deep learning enhances LLM performance.</p>
-                <button class="learn-more-btn" data-modal="modal-3">Learn More</button>
+                <button class="learn-more-btn" data-modal="modal-3" aria-label="Learn more about Deep Learning and LLMs">Learn More</button>
             </div>
-            <div id="modal-3" class="modal">
+            <div id="modal-3" class="modal" role="dialog" aria-labelledby="modal-3-title">
                 <div class="modal-content">
-                    <span class="close-btn">×</span>
-                    <h3 class="text-2xl font-bold mb-4">Extended Reading: Deep Learning and LLMs</h3>
+                    <button class="closeBTN" aria-label="Close modal">×</button>
+                    <h3 id="modal-3-title" class="text-2xl font-bold mb-4">Extended Reading: Deep Learning and LLMs</h3>
                     <p class="text-lg mb-2">Deep learning refers to neural networks with multiple hidden layers, enabling the modeling of complex, non-linear relationships. In LLMs, deep architectures are critical for capturing the intricacies of human language, from syntax to semantics. Each layer transforms the input, learning increasingly abstract representations.</p>
                     <p class="text-lg mb-2">Training deep networks for LLMs involves optimizing millions or billions of parameters. Backpropagation computes gradients of the loss function with respect to each weight, while gradient descent updates weights to minimize errors. Variants like Adam or RMSprop accelerate convergence, handling the high-dimensional optimization landscape.</p>
                     <p class="text-lg mb-2">Deep learning's power in LLMs lies in its ability to generalize. Pre-trained models learn broad language patterns, which can be fine-tuned for specific tasks. This transfer learning reduces the need for task-specific data, making LLMs versatile. However, deep networks are computationally intensive, requiring specialized hardware and raising environmental concerns.</p>
@@ -397,12 +321,12 @@
                 <p class="text-lg mb-2"><strong>Context:</strong> Transformers are the core architecture of modern LLMs.</p>
                 <p class="text-lg mb-2"><strong>Description:</strong> Introduced in the 2017 paper "Attention is All You Need," transformers use self-attention mechanisms to weigh the importance of words in a sentence, enabling parallel processing and long-range dependency modeling. Key components include encoder and decoder stacks.</p>
                 <p class="text-lg mb-2"><strong>Key Learning Outcome:</strong> Learn the significance of transformers and their self-attention mechanism.</p>
-                <button class="learn-more-btn" data-modal="modal-4">Learn More</button>
+                <button class="learn-more-btn" data-modal="modal-4" aria-label="Learn more about The Transformer Revolution">Learn More</button>
             </div>
-            <div id="modal-4" class="modal">
+            <div id="modal-4" class="modal" role="dialog" aria-labelledby="modal-4-title">
                 <div class="modal-content">
-                    <span class="close-btn">×</span>
-                    <h3 class="text-2xl font-bold mb-4">Extended Reading: The Transformer Revolution</h3>
+                    <button class="closeBTN" aria-label="Close modal">×</button>
+                    <h3 id="modal-4-title" class="text-2xl font-bold mb-4">Extended Reading: The Transformer Revolution</h3>
                     <p class="text-lg mb-2">The transformer architecture, introduced in 2017, redefined natural language processing by addressing limitations of RNNs and LSTMs. Unlike sequential models, transformers process entire sequences simultaneously, leveraging self-attention to model relationships between all tokens in a sequence.</p>
                     <p class="text-lg mb-2">A transformer consists of encoder and decoder stacks. The encoder processes input tokens, generating contextual representations, while the decoder generates output sequences, often autoregressively. Each layer includes self-attention and feed-forward neural networks, with residual connections and normalization for stability.</p>
                     <p class="text-lg mb-2">The efficiency of transformers stems from their parallelization, reducing training time compared to sequential models. This scalability enabled the creation of massive LLMs like BERT and GPT-3. Variants like BERT use masked language modeling, while GPT models focus on causal language modeling, tailoring them to different tasks.</p>
@@ -419,12 +343,12 @@
                 <p class="text-lg mb-2"><strong>Context:</strong> Self-attention is the key innovation in transformers.</p>
                 <p class="text-lg mb-2"><strong>Description:</strong> Self-attention allows models to focus on relevant words in a sequence by computing attention scores. It uses query, key, and value vectors to determine relationships between words, enabling context-aware processing. Multi-head attention enhances this by capturing different relationships.</p>
                 <p class="text-lg mb-2"><strong>Key Learning Outcome:</strong> Understand how self-attention enables context-aware language processing.</p>
-                <button class="learn-more-btn" data-modal="modal-5">Learn More</button>
+                <button class="learn-more-btn" data-modal="modal-5" aria-label="Learn more about Self-Attention Mechanism">Learn More</button>
             </div>
-            <div id="modal-5" class="modal">
+            <div id="modal-5" class="modal" role="dialog" aria-labelledby="modal-5-title">
                 <div class="modal-content">
-                    <span class="close-btn">×</span>
-                    <h3 class="text-2xl font-bold mb-4">Extended Reading: Self-Attention Mechanism</h3>
+                    <button class="closeBTN" aria-label="Close modal">×</button>
+                    <h3 id="modal-5-title" class="text-2xl font-bold mb-4">Extended Reading: Self-Attention Mechanism</h3>
                     <p class="text-lg mb-2">Self-attention is the heart of the transformer, enabling models to weigh the importance of each token in a sequence relative to others. For each token, self-attention computes a query, key, and value vector. The attention score is derived by comparing queries and keys, producing weights that scale the value vectors.</p>
                     <p class="text-lg mb-2">Mathematically, self-attention involves a scaled dot-product attention mechanism, where scores are normalized by the square root of the key dimension to prevent large values. The output is a weighted sum of value vectors, providing a context-aware representation for each token.</p>
                     <p class="text-lg mb-2">Multi-head attention enhances this by computing attention in parallel across multiple subspaces, capturing diverse relationships (e.g., syntactic, semantic). This allows transformers to model complex dependencies, such as coreference or long-distance relationships in text.</p>
@@ -441,12 +365,12 @@
                 <p class="text-lg mb-2"><strong>Context:</strong> Training LLMs requires massive computational resources and data.</p>
                 <p class="text-lg mb-2"><strong>Description:</strong> LLMs are trained on diverse text corpora (e.g., books, websites) using unsupervised learning. Techniques like pre-training (learning general language patterns) and fine-tuning (task-specific optimization) are used. Training involves GPUs/TPUs and frameworks like PyTorch.</p>
                 <p class="text-lg mb-2"><strong>Key Learning Outcome:</strong> Appreciate the scale and complexity of LLM training processes.</p>
-                <button class="learn-more-btn" data-modal="modal-6">Learn More</button>
+                <button class="learn-more-btn" data-modal="modal-6" aria-label="Learn more about Training Large Language Models">Learn More</button>
             </div>
-            <div id="modal-6" class="modal">
+            <div id="modal-6" class="modal" role="dialog" aria-labelledby="modal-6-title">
                 <div class="modal-content">
-                    <span class="close-btn">×</span>
-                    <h3 class="text-2xl font-bold mb-4">Extended Reading: Training Large Language Models</h3>
+                    <button class="closeBTN" aria-label="Close modal">×</button>
+                    <h3 id="modal-6-title" class="text-2xl font-bold mb-4">Extended Reading: Training Large Language Models</h3>
                     <p class="text-lg mb-2">Training LLMs is a monumental task, involving massive datasets and computational resources. Pre-training typically uses unsupervised learning on corpora like Common Crawl, Wikipedia, or BookCorpus, with objectives like predicting masked tokens or the next word in a sequence.</p>
                     <p class="text-lg mb-2">The process requires thousands of GPUs or TPUs, often running for weeks, to optimize billions of parameters. Frameworks like PyTorch or TensorFlow facilitate distributed training, leveraging techniques like mixed-precision training to reduce memory demands. Data parallelism and model parallelism are used to scale across hardware.</p>
                     <p class="text-lg mb-2">Fine-tuning adapts pre-trained models to specific tasks using smaller, labeled datasets. This step enhances performance for applications like sentiment analysis or translation. Techniques like learning rate schedules and early stopping prevent overfitting during fine-tuning.</p>
@@ -463,12 +387,12 @@
                 <p class="text-lg mb-2"><strong>Context:</strong> Fine-tuning adapts LLMs for specific tasks.</p>
                 <p class="text-lg mb-2"><strong>Description:</strong> After pre-training, LLMs undergo fine-tuning on labeled datasets to improve performance for tasks like sentiment analysis or translation. Transfer learning allows models to leverage general knowledge for specialized applications, reducing training time.</p>
                 <p class="text-lg mb-2"><strong>Key Learning Outcome:</strong> Understand the role of fine-tuning in customizing LLMs.</p>
-                <button class="learn-more-btn" data-modal="modal-7">Learn More</button>
+                <button class="learn-more-btn" data-modal="modal-7" aria-label="Learn more about Fine-Tuning and Transfer Learning">Learn More</button>
             </div>
-            <div id="modal-7" class="modal">
+            <div id="modal-7" class="modal" role="dialog" aria-labelledby="modal-7-title">
                 <div class="modal-content">
-                    <span class="close-btn">×</span>
-                    <h3 class="text-2xl font-bold mb-4">Extended Reading: Fine-Tuning and Transfer Learning</h3>
+                    <button class="closeBTN" aria-label="Close modal">×</button>
+                    <h3 id="modal-7-title" class="text-2xl font-bold mb-4">Extended Reading: Fine-Tuning and Transfer Learning</h3>
                     <p class="text-lg mb-2">Fine-tuning and transfer learning are pivotal for making LLMs practical for specific applications. Pre-training equips models with general language knowledge, while fine-tuning refines this knowledge using task-specific datasets, often requiring orders of magnitude less data and time.</p>
                     <p class="text-lg mb-2">For example, a pre-trained LLM can be fine-tuned on a dataset of movie reviews to excel at sentiment analysis. This process adjusts the model’s weights, focusing on task-relevant patterns while retaining general knowledge. Techniques like low-rank adaptation (LoRA) reduce the number of parameters updated, improving efficiency.</p>
                     <p class="text-lg mb-2">Transfer learning underpins fine-tuning, allowing models to apply learned representations to new domains. This is particularly valuable in low-resource settings, where labeled data is scarce. However, fine-tuning risks overfitting or catastrophic forgetting, necessitating careful hyperparameter tuning and regularization.</p>
@@ -485,12 +409,12 @@
                 <p class="text-lg mb-2"><strong>Context:</strong> LLMs have diverse real-world applications.</p>
                 <p class="text-lg mb-2"><strong>Description:</strong> LLMs power chatbots (e.g., Grok), content generation tools, code assistants, and more. They’re used in healthcare for medical text analysis, in education for personalized learning, and in business for automated customer support.</p>
                 <p class="text-lg mb-2"><strong>Key Learning Outcome:</strong> Recognize the versatility of LLMs across industries.</p>
-                <button class="learn-more-btn" data-modal="modal-8">Learn More</button>
+                <button class="learn-more-btn" data-modal="modal-8" aria-label="Learn more about Applications of LLMs">Learn More</button>
             </div>
-            <div id="modal-8" class="modal">
+            <div id="modal-8" class="modal" role="dialog" aria-labelledby="modal-8-title">
                 <div class="modal-content">
-                    <span class="close-btn">×</span>
-                    <h3 class="text-2xl font-bold mb-4">Extended Reading: Applications of LLMs</h3>
+                    <button class="closeBTN" aria-label="Close modal">×</button>
+                    <h3 id="modal-8-title" class="text-2xl font-bold mb-4">Extended Reading: Applications of LLMs</h3>
                     <p class="text-lg mb-2">LLMs have revolutionized industries by enabling sophisticated language processing. In customer service, chatbots like Grok handle inquiries with human-like responses, reducing response times. In content creation, LLMs generate articles, marketing copy, or creative fiction, streamlining workflows for writers and marketers.</p>
                     <p class="text-lg mb-2">In healthcare, LLMs analyze medical records, extract insights from unstructured text, and assist with diagnosis by summarizing research. In education, they power adaptive learning platforms, generating personalized quizzes or explanations tailored to student needs.</p>
                     <p class="text-lg mb-2">Developers benefit from code assistants, where LLMs suggest code snippets or debug programs, enhancing productivity. In legal settings, LLMs summarize contracts or identify relevant case law, saving time for professionals. Their ability to process and generate text also supports translation, transcription, and accessibility tools.</p>
@@ -507,12 +431,12 @@
                 <p class="text-lg mb-2"><strong>Context:</strong> Despite their power, LLMs face significant challenges.</p>
                 <p class="text-lg mb-2"><strong>Description:</strong> LLMs can produce biased outputs, hallucinate facts, or require enormous energy for training. Ethical concerns include misuse for misinformation. Scaling laws suggest diminishing returns as models grow larger.</p>
                 <p class="text-lg mb-2"><strong>Key Learning Outcome:</strong> Acknowledge the technical and ethical challenges of LLMs.</p>
-                <button class="learn-more-btn" data-modal="modal-9">Learn More</button>
+                <button class="learn-more-btn" data-modal="modal-9" aria-label="Learn more about Challenges and Limitations">Learn More</button>
             </div>
-            <div id="modal-9" class="modal">
+            <div id="modal-9" class="modal" role="dialog" aria-labelledby="modal-9-title">
                 <div class="modal-content">
-                    <span class="close-btn">×</span>
-                    <h3 class="text-2xl font-bold mb-4">Extended Reading: Challenges and Limitations</h3>
+                    <button class="closeBTN" aria-label="Close modal">×</button>
+                    <h3 id="modal-9-title" class="text-2xl font-bold mb-4">Extended Reading: Challenges and Limitations</h3>
                     <p class="text-lg mb-2">LLMs, while powerful, face significant hurdles. Bias is a primary concern, as training data often reflects societal prejudices, leading to outputs that may perpetuate stereotypes or exclude marginalized groups. Mitigating bias requires careful dataset curation and debiasing techniques, which are still evolving.</p>
                     <p class="text-lg mb-2">Hallucination, where models generate plausible but false information, poses risks in applications requiring factual accuracy, such as journalism or healthcare. Techniques like retrieval-augmented generation aim to ground outputs in verified sources, but challenges persist.</p>
                     <p class="text-lg mb-2">The environmental impact of training LLMs is substantial, with large models consuming energy equivalent to thousands of households. This raises sustainability concerns, prompting research into energy-efficient training and inference methods.</p>
@@ -529,12 +453,12 @@
                 <p class="text-lg mb-2"><strong>Context:</strong> LLMs are evolving rapidly, with exciting prospects.</p>
                 <p class="text-lg mb-2"><strong>Description:</strong> Future LLMs may integrate multimodal capabilities (text, images, audio), improve efficiency through sparse architectures, and address ethical concerns via better governance. Innovations like reinforcement learning with human feedback (RLHF) will enhance performance.</p>
                 <p class="text-lg mb-2"><strong>Key Learning Outcome:</strong> Envision the potential advancements in LLM technology.</p>
-                <button class="learn-more-btn" data-modal="modal-10">Learn More</button>
+                <button class="learn-more-btn" data-modal="modal-10" aria-label="Learn more about The Future of LLMs">Learn More</button>
             </div>
-            <div id="modal-10" class="modal">
+            <div id="modal-10" class="modal" role="dialog" aria-labelledby="modal-10-title">
                 <div class="modal-content">
-                    <span class="close-btn">×</span>
-                    <h3 class="text-2xl font-bold mb-4">Extended Reading: The Future of LLMs</h3>
+                    <button class="closeBTN" aria-label="Close modal">×</button>
+                    <h3 id="modal-10-title" class="text-2xl font-bold mb-4">Extended Reading: The Future of LLMs</h3>
                     <p class="text-lg mb-2">The future of LLMs promises exciting advancements. Multimodal models, integrating text, images, and audio, are emerging, enabling applications like image captioning or voice-driven assistants. Models like CLIP and DALL-E demonstrate early successes, but scaling multimodal training remains complex.</p>
                     <p class="text-lg mb-2">Efficiency is a key focus, with sparse architectures like Switch Transformers reducing computational costs while maintaining performance. Techniques such as quantization and pruning further optimize inference, making LLMs viable on edge devices.</p>
                     <p class="text-lg mb-2">Ethical alignment is gaining traction, with reinforcement learning with human feedback (RLHF) improving model behavior by incorporating human values. Robust governance frameworks are being developed to address bias, misinformation, and misuse, ensuring responsible deployment.</p>
@@ -551,12 +475,12 @@
                 <p class="text-lg mb-2"><strong>Context:</strong> LLMs and neural networks are reshaping AI.</p>
                 <p class="text-lg mb-2"><strong>Description:</strong> From transformers to self-attention, the neural architectures behind LLMs enable remarkable language capabilities. Understanding their mechanics, applications, and challenges is crucial for leveraging their potential responsibly.</p>
                 <p class="text-lg mb-2"><strong>Key Learning Outcome:</strong> Gain a holistic understanding of LLMs and their significance in AI.</p>
-                <button class="learn-more-btn" data-modal="modal-11">Learn More</button>
+                <button class="learn-more-btn" data-modal="modal-11" aria-label="Learn more about Conclusion">Learn More</button>
             </div>
-            <div id="modal-11" class="modal">
+            <div id="modal-11" class="modal" role="dialog" aria-labelledby="modal-11-title">
                 <div class="modal-content">
-                    <span class="close-btn">×</span>
-                    <h3 class="text-2xl font-bold mb-4">Extended Reading: Conclusion</h3>
+                    <button class="closeBTN" aria-label="Close modal">×</button>
+                    <h3 id="modal-11-title" class="text-2xl font-bold mb-4">Extended Reading: Conclusion</h3>
                     <p class="text-lg mb-2">The rise of LLMs marks a pivotal moment in AI, driven by neural architectures like transformers and self-attention. These models have redefined what’s possible in language processing, enabling applications that were once the realm of science fiction, from conversational agents to automated content creation.</p>
                     <p class="text-lg mb-2">Yet, their development is a balancing act. The technical achievements—massive scale, contextual understanding, and task versatility—come with challenges like bias, energy consumption, and ethical risks. Addressing these requires collaboration across disciplines, from computer science to policy, to ensure LLMs serve society equitably.</p>
                     <p class="text-lg mb-2">Looking ahead, LLMs are poised to become more integrated, efficient, and aligned with human needs. Innovations in multimodal processing, efficient training, and ethical governance will shape their trajectory, potentially transforming education, healthcare, and beyond.</p>
@@ -571,131 +495,179 @@
             <div class="content-box assessment-container">
                 <h2 class="text-4xl font-bold mb-4">Assessment</h2>
                 <p class="text-lg mb-2"><strong>Instructions:</strong> Enter your name and answer the following multiple-choice questions to test your understanding of LLMs and neural networks. A score of 70% or higher is required to pass and receive a certificate. Click "Submit" to see your results.</p>
-                <input type="text" id="user-name" class="name-input" placeholder="Enter your name" required>
+                <input type="text" id="user-name" class="name-input" placeholder="Enter your name" required aria-label="Enter your name">
                 <div class="question">
                     <p class="text-lg font-semibold">1. What is a primary function of Large Language Models (LLMs)?</p>
-                    <label><input type="radio" name="q1" value="a"> Image recognition</label>
-                    <label><input type="radio" name="q1" value="b"> Generating human-like text</label>
-                    <label><input type="radio" name="q1" value="c"> Hardware optimization</label>
-                    <label><input type="radio" name="q1" value="d"> Database management</label>
-                    <div class="feedback" id="feedback-q1"></div>
+                    <label><input type="radio" name="q1" value="a" aria-label="Image recognition"> Image recognition</label>
+                    <label><input type="radio" name="q1" value="b" aria-label="Generating human-like text"> Generating human-like text</label>
+                    <label><input type="radio" name="q1" value="c" aria-label="Hardware optimization"> Hardware optimization</label>
+                    <label><input type="radio" name="q1" value="d" aria-label="Database management"> Database management</label>
+                    <div class="feedback" id="feedback-q1" role="alert"></div>
                 </div>
                 <div class="question">
                     <p class="text-lg font-semibold">2. Which model marked a significant milestone in the evolution of LLMs in 2017?</p>
-                    <label><input type="radio" name="q2" value="a"> ELIZA</label>
-                    <label><input type="radio" name="q2" value="b"> Transformer</label>
-                    <label><input type="radio" name="q2" value="c"> RNN</label>
-                    <label><input type="radio" name="q2" value="d"> LSTM</label>
-                    <div class="feedback" id="feedback-q2"></div>
+                    <label><input type="radio" name="q2" value="a" aria-label="ELIZA"> ELIZA</label>
+                    <label><input type="radio" name="q2" value="b" aria-label="Transformer"> Transformer</label>
+                    <label><input type="radio" name="q2" value="c" aria-label="RNN"> RNN</label>
+                    <label><input type="radio" name="q2" value="d" aria-label="LSTM"> LSTM</label>
+                    <div class="feedback" id="feedback-q2" role="alert"></div>
                 </div>
                 <div class="question">
                     <p class="text-lg font-semibold">3. What are the key components of a neural network?</p>
-                    <label><input type="radio" name="q3" value="a"> Input, hidden, and output layers</label>
-                    <label><input type="radio" name="q3" value="b"> Query, key, and value vectors</label>
-                    <label><input type="radio" name="q3" value="c"> Encoder and decoder stacks</label>
-                    <label><input type="radio" name="q3" value="d"> Sparse and dense matrices</label>
-                    <div class="feedback" id="feedback-q3"></div>
+                    <label><input type="radio" name="q3" value="a" aria-label="Input, hidden, and output layers"> Input, hidden, and output layers</label>
+                    <label><input type="radio" name="q3" value="b" aria-label="Query, key, and value vectors"> Query, key, and value vectors</label>
+                    <label><input type="radio" name="q3" value="c" aria-label="Encoder and decoder stacks"> Encoder and decoder stacks</label>
+                    <label><input type="radio" name="q3" value="d" aria-label="Sparse and dense matrices"> Sparse and dense matrices</label>
+                    <div class="feedback" id="feedback-q3" role="alert"></div>
                 </div>
                 <div class="question">
                     <p class="text-lg font-semibold">4. How does deep learning enhance LLMs?</p>
-                    <label><input type="radio" name="q4" value="a"> By reducing model size</label>
-                    <label><input type="radio" name="q4" value="b"> By learning hierarchical features</label>
-                    <label><input type="radio" name="q4" value="c"> By eliminating the need for training</label>
-                    <label><input type="radio" name="q4" value="d"> By focusing on image processing</label>
-                    <div class="feedback" id="feedback-q4"></div>
+                    <label><input type="radio" name="q4" value="a" aria-label="By reducing model size"> By reducing model size</label>
+                    <label><input type="radio" name="q4" value="b" aria-label="By learning hierarchical features"> By learning hierarchical features</label>
+                    <label><input type="radio" name="q4" value="c" aria-label="By eliminating the need for training"> By eliminating the need for training</label>
+                    <label><input type="radio" name="q4" value="d" aria-label="By focusing on image processing"> By focusing on image processing</label>
+                    <div class="feedback" id="feedback-q4" role="alert"></div>
                 </div>
                 <div class="question">
                     <p class="text-lg font-semibold">5. What is a key feature of the transformer architecture?</p>
-                    <label><input type="radio" name="q5" value="a"> Sequential processing</label>
-                    <label><input type="radio" name="q5" value="b"> Self-attention mechanisms</label>
-                    <label><input type="radio" name="q5" value="c"> Rule-based processing</label>
-                    <label><input type="radio" name="q5" value="d"> Single-layer architecture</label>
-                    <div class="feedback" id="feedback-q5"></div>
+                    <label><input type="radio" name="q5" value="a" aria-label="Sequential processing"> Sequential processing</label>
+                    <label><input type="radio" name="q5" value="b" aria-label="Self-attention mechanisms"> Self-attention mechanisms</label>
+                    <label><input type="radio" name="q5" value="c" aria-label="Rule-based processing"> Rule-based processing</label>
+                    <label><input type="radio" name="q5" value="d" aria-label="Single-layer architecture"> Single-layer architecture</label>
+                    <div class="feedback" id="feedback-q5" role="alert"></div>
                 </div>
                 <div class="question">
                     <p class="text-lg font-semibold">6. What does multi-head attention in self-attention achieve?</p>
-                    <label><input type="radio" name="q6" value="a"> Reduces model parameters</label>
-                    <label><input type="radio" name="q6" value="b"> Captures diverse relationships</label>
-                    <label><input type="radio" name="q6" value="c"> Eliminates the need for keys</label>
-                    <label><input type="radio" name="q6" value="d"> Increases sequence length</label>
-                    <div class="feedback" id="feedback-q6"></div>
+                    <label><input type="radio" name="q6" value="a" aria-label="Reduces model parameters"> Reduces model parameters</label>
+                    <label><input type="radio" name="q6" value="b" aria-label="Captures diverse relationships"> Captures diverse relationships</label>
+                    <label><input type="radio" name="q6" value="c" aria-label="Eliminates the need for keys"> Eliminates the need for keys</label>
+                    <label><input type="radio" name="q6" value="d" aria-label="Increases sequence length"> Increases sequence length</label>
+                    <div class="feedback" id="feedback-q6" role="alert"></div>
                 </div>
                 <div class="question">
                     <p class="text-lg font-semibold">7. What is a common technique used in pre-training LLMs?</p>
-                    <label><input type="radio" name="q7" value="a"> Supervised learning</label>
-                    <label><input type="radio" name="q7" value="b"> Unsupervised learning</label>
-                    <label><input type="radio" name="q7" value="c"> Reinforcement learning</label>
-                    <label><input type="radio" name="q7" value="d"> Rule-based learning</label>
-                    <div class="feedback" id="feedback-q7"></div>
+                    <label><input type="radio" name="q7" value="a" aria-label="Supervised learning"> Supervised learning</label>
+                    <label><input type="radio" name="q7" value="b" aria-label="Unsupervised learning"> Unsupervised learning</label>
+                    <label><input type="radio" name="q7" value="c" aria-label="Reinforcement learning"> Reinforcement learning</label>
+                    <label><input type="radio" name="q7" value="d" aria-label="Rule-based learning"> Rule-based learning</label>
+                    <div class="feedback" id="feedback-q7" role="alert"></div>
                 </div>
                 <div class="question">
                     <p class="text-lg font-semibold">8. What is the primary purpose of fine-tuning in LLMs?</p>
-                    <label><input type="radio" name="q8" value="a"> To increase model size</label>
-                    <label><input type="radio" name="q8" value="b"> To adapt models for specific tasks</label>
-                    <label><input type="radio" name="q8" value="c"> To reduce training data</label>
-                    <label><input type="radio" name="q8" value="d"> To eliminate biases</label>
-                    <div class="feedback" id="feedback-q8"></div>
+                    <label><input type="radio" name="q8" value="a" aria-label="To increase model size"> To increase model size</label>
+                    <label><input type="radio" name="q8" value="b" aria-label="To adapt models for specific tasks"> To adapt models for specific tasks</label>
+                    <label><input type="radio" name="q8" value="c" aria-label="To reduce training data"> To reduce training data</label>
+                    <label><input type="radio" name="q8" value="d" aria-label="To eliminate biases"> To eliminate biases</label>
+                    <div class="feedback" id="feedback-q8" role="alert"></div>
                 </div>
                 <div class="question">
                     <p class="text-lg font-semibold">9. Which is an application of LLMs in healthcare?</p>
-                    <label><input type="radio" name="q9" value="a"> Hardware design</label>
-                    <label><input type="radio" name="q9" value="b"> Medical text analysis</label>
-                    <label><input type="radio" name="q9" value="c"> Network security</label>
-                    <label><input type="radio" name="q9" value="d"> Financial forecasting</label>
-                    <div class="feedback" id="feedback-q9"></div>
+                    <label><input type="radio" name="q9" value="a" aria-label="Hardware design"> Hardware design</label>
+                    <label><input type="radio" name="q9" value="b" aria-label="Medical text analysis"> Medical text analysis</label>
+                    <label><input type="radio" name="q9" value="c" aria-label="Network security"> Network security</label>
+                    <label><input type="radio" name="q9" value="d" aria-label="Financial forecasting"> Financial forecasting</label>
+                    <div class="feedback" id="feedback-q9" role="alert"></div>
                 </div>
                 <div class="question">
                     <p class="text-lg font-semibold">10. What is a major ethical challenge of LLMs?</p>
-                    <label><input type="radio" name="q10" value="a"> Limited task versatility</label>
-                    <label><input type="radio" name="q10" value="b"> Misuse for misinformation</label>
-                    <label><input type="radio" name="q10" value="c"> Low computational cost</label>
-                    <label><input type="radio" name="q10" value="d"> Lack of scalability</label>
-                    <div class="feedback" id="feedback-q10"></div>
+                    <label><input type="radio" name="q10" value="a" aria-label="Limited task versatility"> Limited task versatility</label>
+                    <label><input type="radio" name="q10" value="b" aria-label="Misuse for misinformation"> Misuse for misinformation</label>
+                    <label><input type="radio" name="q10" value="c" aria-label="Low computational cost"> Low computational cost</label>
+                    <label><input type="radio" name="q10" value="d" aria-label="Lack of scalability"> Lack of scalability</label>
+                    <div class="feedback" id="feedback-q10" role="alert"></div>
                 </div>
                 <div class="question">
                     <p class="text-lg font-semibold">11. What is a future direction for LLMs mentioned in the slides?</p>
-                    <label><input type="radio" name="q11" value="a"> Reducing model complexity</label>
-                    <label><input type="radio" name="q11" value="b"> Multimodal capabilities</label>
-                    <label><input type="radio" name="q11" value="c"> Eliminating neural networks</label>
-                    <label><input type="radio" name="q11" value="d"> Focusing on rule-based systems</label>
-                    <div class="feedback" id="feedback-q11"></div>
+                    <label><input type="radio" name="q11" value="a" aria-label="Reducing model complexity"> Reducing model complexity</label>
+                    <label><input type="radio" name="q11" value="b" aria-label="Multimodal capabilities"> Multimodal capabilities</label>
+                    <label><input type="radio" name="q11" value="c" aria-label="Eliminating neural networks"> Eliminating neural networks</label>
+                    <label><input type="radio" name="q11" value="d" aria-label="Focusing on rule-based systems"> Focusing on rule-based systems</label>
+                    <div class="feedback" id="feedback-q11" role="alert"></div>
                 </div>
                 <div class="question">
                     <p class="text-lg font-semibold">12. What is a key takeaway from the conclusion slide?</p>
-                    <label><input type="radio" name="q12" value="a"> LLMs are limited to chatbots</label>
-                    <label><input type="radio" name="q12" value="b"> Understanding LLMs is crucial for responsible use</label>
-                    <label><input type="radio" name="q12" value="c"> Transformers are outdated</label>
-                    <label><input type="radio" name="q12" value="d"> Neural networks are irrelevant</label>
-                    <div class="feedback" id="feedback-q12"></div>
+                    <label><input type="radio" name="q12" value="a" aria-label="LLMs are limited to chatbots"> LLMs are limited to chatbots</label>
+                    <label><input type="radio" name="q12" value="b" aria-label="Understanding LLMs is crucial for responsible use"> Understanding LLMs is crucial for responsible use</label>
+                    <label><input type="radio" name="q12" value="c" aria-label="Transformers are outdated"> Transformers are outdated</label>
+                    <label><input type="radio" name="q12" value="d" aria-label="Neural networks are irrelevant"> Neural networks are irrelevant</label>
+                    <div class="feedback" id="feedback-q12" role="alert"></div>
                 </div>
-                <button class="submit-btn" id="submit-assessment">Submit</button>
-                <div id="score" class="text-lg mt-4"></div>
+                <button class="submit-btn" id="submit-assessment" aria-label="Submit assessment">Submit</button>
+                <div id="score" class="text-lg mt-4" role="alert"></div>
             </div>
         </div>
     </div>
 
     <!-- Navigation Arrows -->
-    <div class="nav-arrow left-arrow" style="display: none;">◀</div>
-    <div class="nav-arrow right-arrow">▶</div>
+    <button class="nav-arrow left-arrow" style="display: none;" aria-label="Previous slide">◀</button>
+    <button class="nav-arrow right-arrow" aria-label="Next slide">▶</button>
+
+    <!-- Course Complete Modal -->
+    <div id="courseCompleteModal" class="modal" role="dialog" aria-labelledby="course-complete-title">
+        <div class="modal-content">
+            <button class="closeBTN" aria-label="Close modal">×</button>
+            <h2 id="course-complete-title" class="text-2xl font-bold mb-4">Course Complete</h2>
+            <p class="text-lg mb-2">Congratulations! You have successfully completed the Large Language Models course.</p>
+            <button id="download-certificate" class="submit-btn" aria-label="Download certificate">Download Certificate</button>
+        </div>
+    </div>
 
     <script>
+        // Commented out XLSX processing script (retained for potential future use)
+        /*
+        var gk_isXlsx = false;
+        var gk_xlsxFileLookup = {};
+        var gk_fileData = {};
+        function filledCell(cell) {
+            return cell !== '' && cell != null;
+        }
+        function loadFileData(filename) {
+            if (gk_isXlsx && gk_xlsxFileLookup[filename]) {
+                try {
+                    var workbook = XLSX.read(gk_fileData[filename], { type: 'base64' });
+                    var firstSheetName = workbook.SheetNames[0];
+                    var worksheet = workbook.Sheets[firstSheetName];
+                    var jsonData = XLSX.utils.sheet_to_json(worksheet, { header: 1, blankrows: false, defval: '' });
+                    var filteredData = jsonData.filter(row => row.some(filledCell));
+                    var headerRowIndex = filteredData.findIndex((row, index) =>
+                        row.filter(filledCell).length >= filteredData[index + 1]?.filter(filledCell).length
+                    );
+                    if (headerRowIndex === -1 || headerRowIndex > 25) {
+                        headerRowIndex = 0;
+                    }
+                    var csv = XLSX.utils.aoa_to_sheet(filteredData.slice(headerRowIndex));
+                    csv = XLSX.utils.sheet_to_csv(csv, { header: 1 });
+                    return csv;
+                } catch (e) {
+                    console.error(e);
+                    return "";
+                }
+            }
+            return gk_fileData[filename] || "";
+        }
+        */
+
         const slides = document.querySelectorAll('.slide');
         const menuItems = document.querySelectorAll('.menu-item');
         const leftArrow = document.querySelector('.left-arrow');
         const rightArrow = document.querySelector('.right-arrow');
         const learnMoreButtons = document.querySelectorAll('.learn-more-btn');
         const modals = document.querySelectorAll('.modal');
-        const closeButtons = document.querySelectorAll('.close-btn');
+        const closeButtons = document.querySelectorAll('.closeBTN');
         const submitButton = document.getElementById('submit-assessment');
         const userNameInput = document.getElementById('user-name');
+        const downloadCertificateButton = document.getElementById('download-certificate');
         let currentSlide = 0;
+        let certificateData = null;
 
         function updateSlides() {
             slides.forEach((slide, index) => {
                 slide.classList.toggle('active', index === currentSlide);
+                slide.setAttribute('aria-hidden', index !== currentSlide);
             });
             menuItems.forEach((item, index) => {
                 item.classList.toggle('active', index === currentSlide);
+                item.setAttribute('aria-current', index === currentSlide ? 'true' : 'false');
             });
             leftArrow.style.display = currentSlide === 0 ? 'none' : 'block';
             rightArrow.style.display = currentSlide === slides.length - 1 ? 'none' : 'block';
@@ -732,6 +704,7 @@
                 const modal = document.getElementById(modalId);
                 if (modal) {
                     modal.style.display = 'flex';
+                    modal.querySelector('.modal-content').focus();
                 }
             });
         });
@@ -749,6 +722,15 @@
             button.addEventListener('click', () => {
                 const modal = button.closest('.modal');
                 if (modal) {
+                    modal.style.display = 'none';
+                }
+            });
+        });
+
+        // Keyboard navigation for modals
+        modals.forEach(modal => {
+            modal.addEventListener('keydown', (e) => {
+                if (e.key === 'Escape') {
                     modal.style.display = 'none';
                 }
             });
@@ -774,6 +756,7 @@
             const userName = userNameInput.value.trim();
             if (!userName) {
                 alert('Please enter your name before submitting.');
+                userNameInput.focus();
                 return;
             }
 
@@ -796,9 +779,7 @@
                         feedback.className = 'feedback correct';
                     } else {
                         feedback.textContent = `Incorrect. The correct answer is: ${
-                            correctAnswers[question] === 'a' ? 'Option A' :
-                            correctAnswers[question] === 'b' ? 'Option B' :
-                            correctAnswers[question] === 'c' ? 'Option C' : 'Option D'
+                            document.querySelector(`input[name="${question}"][value="${correctAnswers[question]}"]`).parentElement.textContent.trim()
                         }.`;
                         feedback.className = 'feedback incorrect';
                     }
@@ -816,63 +797,47 @@
             document.getElementById('score').textContent = `Your score: ${score}/${totalQuestions} (${percentage}%) - ${passStatus}`;
 
             if (percentage >= 70) {
-               
-                const certificateData = {
-                    name: userName.replace(/[^a-zA-Z0-9\s]/g, ''), // Sanitize name
+                certificateData = {
+                    name: userName.replace(/[^a-zA-Z0-9\s]/g, ''),
                     score: `${score}/${totalQuestions} (${percentage}%)`,
                     status: passStatus,
-                    date: '10:34 PM BST, Tuesday, May 13, 2025',
+                    date: new Date().toLocaleString('en-GB', { timeZone: 'Europe/London' }),
                     course: 'Introduction to Large Language Models and Neural Networks'
                 };
 
-              // Modal Control
-function showCourseCompleteModal() {
-    const modal = document.getElementById("courseCompleteModal");
-    modal.style.display = "flex";
-}
-
-// Close Modal
-document.addEventListener("click", function(event) {
-    if (event.target.classList.contains("close-button")) {
-        const modal = document.getElementById("courseCompleteModal");
-        modal.style.display = "none";
-    }
-});
-
-// Optional: Trigger modal on assessment submit (example)
-document.querySelector(".assessment .submit-button")?.addEventListener("click", function() {
-    // Replace with your assessment scoring logic
-    const score = calculateAssessmentScore(); // Placeholder function
-    if (score >= 70) {
-        showCourseCompleteModal();
-    }
-});
-
-// Placeholder for assessment scoring (customize as needed)
-function calculateAssessmentScore() {
-    // Implement your logic to calculate the assessment score
-    // Return a percentage (e.g., 80 for 80%)
-    return 70; // Example: Assume passing score
-}
-                
+                const modal = document.getElementById('courseCompleteModal');
+                modal.style.display = 'flex';
+                modal.querySelector('.modal-content').focus();
             }
         });
 
- 
+        // Certificate generation
+        if (downloadCertificateButton) {
+            downloadCertificateButton.addEventListener('click', () => {
+                if (certificateData) {
+                    const { jsPDF } = window.jspdf;
+                    const doc = new jsPDF();
+                    doc.setFontSize(24);
+                    doc.text('Certificate of Completion', 105, 30, { align: 'center' });
+                    doc.setFontSize(16);
+                    doc.text(`This certifies that`, 105, 60, { align: 'center' });
+                    doc.setFontSize(20);
+                    doc.text(`${certificateData.name}`, 105, 80, { align: 'center' });
+                    doc.setFontSize(16);
+                    doc.text(`has successfully completed the course`, 105, 100, { align: 'center' });
+                    doc.setFontSize(18);
+                    doc.text(`${certificateData.course}`, 105, 120, { align: 'center' });
+                    doc.setFontSize(14);
+                    doc.text(`Score: ${certificateData.score}`, 105, 140, { align: 'center' });
+                    doc.text(`Status: ${certificateData.status}`, 105, 150, { align: 'center' });
+                    doc.text(`Date: ${certificateData.date}`, 105, 160, { align: 'center' });
+                    doc.save(`Certificate_${certificateData.name}.pdf`);
+                }
+            });
+        }
 
         // Initialize the first slide
         updateSlides();
     </script>
-
-    <!-- Course Complete Modal -->
-<div id="courseCompleteModal" class="modal">
-    <div class="modal-content">
-        <span class="close-button">&times;</span>
-        <h2>Course Complete</h2>
-        <p>Congratulations! You have successfully completed the Large Language Models course.</p>
-    </div>
-</div>
-
-
 </body>
 </html>
