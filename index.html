@@ -1,4 +1,43 @@
-<!DOCTYPE html>
+<script type="text/javascript">
+        var gk_isXlsx = false;
+        var gk_xlsxFileLookup = {};
+        var gk_fileData = {};
+        function filledCell(cell) {
+          return cell !== '' && cell != null;
+        }
+        function loadFileData(filename) {
+        if (gk_isXlsx && gk_xlsxFileLookup[filename]) {
+            try {
+                var workbook = XLSX.read(gk_fileData[filename], { type: 'base64' });
+                var firstSheetName = workbook.SheetNames[0];
+                var worksheet = workbook.Sheets[firstSheetName];
+
+                // Convert sheet to JSON to filter blank rows
+                var jsonData = XLSX.utils.sheet_to_json(worksheet, { header: 1, blankrows: false, defval: '' });
+                // Filter out blank rows (rows where all cells are empty, null, or undefined)
+                var filteredData = jsonData.filter(row => row.some(filledCell));
+
+                // Heuristic to find the header row by ignoring rows with fewer filled cells than the next row
+                var headerRowIndex = filteredData.findIndex((row, index) =>
+                  row.filter(filledCell).length >= filteredData[index + 1]?.filter(filledCell).length
+                );
+                // Fallback
+                if (headerRowIndex === -1 || headerRowIndex > 25) {
+                  headerRowIndex = 0;
+                }
+
+                // Convert filtered JSON back to CSV
+                var csv = XLSX.utils.aoa_to_sheet(filteredData.slice(headerRowIndex)); // Create a new sheet from filtered array of arrays
+                csv = XLSX.utils.sheet_to_csv(csv, { header: 1 });
+                return csv;
+            } catch (e) {
+                console.error(e);
+                return "";
+            }
+        }
+        return gk_fileData[filename] || "";
+        }
+        </script><!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
@@ -111,7 +150,7 @@
         .right-arrow {
             right: 20px;
         }
-        .learn-more-btn, .submit-btn {
+        .learn-more-btn, .submit-btn, .linkedin-share-btn {
             background: #7c3aed;
             padding: 0.5rem 1rem;
             border-radius: 0.5rem;
@@ -122,7 +161,7 @@
             border: none;
             cursor: pointer;
         }
-        .learn-more-btn:hover, .submit-btn:hover {
+        .learn-more-btn:hover, .submit-btn:hover, .linkedin-share-btn:hover {
             transform: scale(1.05);
         }
         .modal {
@@ -200,6 +239,11 @@
             background: linear-gradient(to right, #a855f7, #3b82f6);
             -webkit-background-clip: text;
             -webkit-text-fill-color: transparent;
+        }
+        .button-container {
+            display: flex;
+            gap: 1rem;
+            justify-content: center;
         }
     </style>
 </head>
@@ -608,7 +652,10 @@
             <button class="closeBTN" aria-label="Close modal">×</button>
             <h2 id="course-complete-title" class="text-2xl font-bold mb-4">Course Complete</h2>
             <p class="text-lg mb-2">Congratulations! You have successfully completed the Large Language Models course.</p>
-            <button id="download-certificate" class="submit-btn" aria-label="Download certificate">Download Certificate</button>
+            <div class="button-container">
+                <button id="download-certificate" class="submit-btn" aria-label="Download certificate">Download Certificate</button>
+                <button id="linkedin-share" class="linkedin-share-btn" aria-label="Share on LinkedIn">Share on LinkedIn</button>
+            </div>
         </div>
     </div>
 
@@ -657,6 +704,7 @@
         const submitButton = document.getElementById('submit-assessment');
         const userNameInput = document.getElementById('user-name');
         const downloadCertificateButton = document.getElementById('download-certificate');
+        const linkedinShareButton = document.getElementById('linkedin-share');
         let currentSlide = 0;
         let certificateData = null;
 
@@ -833,6 +881,15 @@
                     doc.text(`Date: ${certificateData.date}`, 105, 160, { align: 'center' });
                     doc.save(`Certificate_${certificateData.name}.pdf`);
                 }
+            });
+        }
+
+        // LinkedIn share button
+        if (linkedinShareButton) {
+            linkedinShareButton.addEventListener('click', () => {
+                const shareText = "I just completed the LLM 101 Course created by AI and Daniel Card, check it out at https://mr-r3b00t.github.io/llm101/";
+                const shareUrl = `https://www.linkedin.com/sharing/share-offsite/?url=${encodeURIComponent('https://mr-r3b00t.github.io/llm101/')}&title=${encodeURIComponent('Completed LLM 101 Course')}&summary=${encodeURIComponent(shareText)}`;
+                window.open(shareUrl, '_blank', 'width=600,height=400');
             });
         }
 
