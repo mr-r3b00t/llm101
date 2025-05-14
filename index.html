@@ -150,7 +150,7 @@
         .right-arrow {
             right: 20px;
         }
-        .learn-more-btn, .submit-btn, .linkedin-share-btn {
+        .learn-more-btn, .submit-btn, .linkedin-share-btn, .twitter-share-btn {
             background: #7c3aed;
             padding: 0.5rem 1rem;
             border-radius: 0.5rem;
@@ -161,7 +161,7 @@
             border: none;
             cursor: pointer;
         }
-        .learn-more-btn:hover, .submit-btn:hover, .linkedin-share-btn:hover {
+        .learn-more-btn:hover, .submit-btn:hover, .linkedin-share-btn:hover, .twitter-share-btn:hover {
             transform: scale(1.05);
         }
         .modal {
@@ -244,6 +244,7 @@
             display: flex;
             gap: 1rem;
             justify-content: center;
+            flex-wrap: wrap;
         }
     </style>
 </head>
@@ -655,6 +656,7 @@
             <div class="button-container">
                 <button id="download-certificate" class="submit-btn" aria-label="Download certificate">Download Certificate</button>
                 <button id="linkedin-share" class="linkedin-share-btn" aria-label="Share on LinkedIn">Share on LinkedIn</button>
+                <button id="twitter-share" class="twitter-share-btn" aria-label="Share on Twitter">Share on Twitter</button>
             </div>
         </div>
     </div>
@@ -705,6 +707,7 @@
         const userNameInput = document.getElementById('user-name');
         const downloadCertificateButton = document.getElementById('download-certificate');
         const linkedinShareButton = document.getElementById('linkedin-share');
+        const twitterShareButton = document.getElementById('twitter-share');
         let currentSlide = 0;
         let certificateData = null;
 
@@ -884,11 +887,20 @@
             });
         }
 
-        // LinkedIn share button
+        // LinkedIn share button (reverted to previous method)
         if (linkedinShareButton) {
             linkedinShareButton.addEventListener('click', () => {
                 const shareText = "Just aced the LLM 101 Course by AI and Daniel Card! 🚀 Dive into the world of Large Language Models with this mind-blowing journey from neurons to transformers. Check it out at https://mr-r3b00t.github.io/llm101/ #AI #MachineLearning #LLM101";
                 const shareUrl = `https://www.linkedin.com/sharing/share-offsite/?url=${encodeURIComponent('https://mr-r3b00t.github.io/llm101/')}&title=${encodeURIComponent('Completed LLM 101 Course')}&summary=${encodeURIComponent(shareText)}`;
+                window.open(shareUrl, '_blank', 'width=600,height=400');
+            });
+        }
+
+        // Twitter share button
+        if (twitterShareButton) {
+            twitterShareButton.addEventListener('click', () => {
+                const shareText = "Just aced the LLM 101 Course by AI and Daniel Card! 🚀 Dive into the world of Large Language Models with this mind-blowing journey from neurons to transformers. Check it out at https://mr-r3b00t.github.io/llm101/ #AI #MachineLearning #LLM101";
+                const shareUrl = `https://twitter.com/intent/tweet?text=${encodeURIComponent(shareText)}`;
                 window.open(shareUrl, '_blank', 'width=600,height=400');
             });
         }
